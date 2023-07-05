@@ -5,6 +5,13 @@ get ippsec's parrot build playbooks
 
 # git clone https://github.com/IppSec/parrot-build.git
 
+Add 1password to the list of firefox plugins
+# echo '  - "1password-x-password-manager"' > parrot-build/roles/customize-browser/vars/main.yml
+
+Add extra vscode extensions
+- HashiCorp.terraform
+- Bridgecrew.checkov > parrot-build/main.yml
+
 get a sudo token
 # sudo whoami
 
@@ -17,3 +24,5 @@ run the ippsec playbook
 run the personal playbook
 # ansible-playbook main.yml --ask-vault-pass
 
+setup 1password
+# sh ~/.1passwordsetup.sh

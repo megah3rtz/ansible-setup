@@ -1,0 +1,27 @@
+---
+
+- hosts: localhost
+  become: true
+  vars_files:
+    - vault.yml
+
+  tasks:
+
+  - name: Gather package facts
+    package_facts:
+      manager: auto
+
+  - include: 1password.yml
+  - include: install-packages.yml
+
+
+
+  # https://askubuntu.com/questions/1071027/how-to-configure-a-u2f-keysuch-as-a-yubikey-for-system-wide-2-factor-authentic
+  # #pamu2fcfg > /etc/u2f_keys
+
+  - name: Setup yubikey for user authentication
+    lineinfile:
+      line: '#auth    required   pam_u2f.so nouserok authfile=/etc/u2f_keys cue'
+      path: /etc/pam.d/common-auth
+      state: present
+    loop: "{{ adminusers }}"

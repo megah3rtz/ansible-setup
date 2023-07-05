@@ -1,0 +1,147 @@
+######################
+# Add repos and keys #
+
+- name: Add Brave key
+  shell:
+    cmd: curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+  when: '"brave" not in ansible_facts.packages'
+
+- name: Add Brave apt repository
+  shell:
+    cmd: echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"|sudo tee /etc/apt/sources.list.d/brave-browser-release.list
+  when: '"brave" not in ansible_facts.packages'
+
+- name: Add 1password key
+  shell:
+    cmd: curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+  when: '"1password" not in ansible_facts.packages'
+
+- name: Add 1password apt repository
+  shell:
+    cmd:  echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | sudo tee /etc/apt/sources.list.d/1password.list
+  when: '"1password" not in ansible_facts.packages'
+
+- name: Make 1password debsig directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/debsig/policies/AC2D62742012EA22/
+    - /usr/share/debsig/keyrings/AC2D62742012EA22
+  when: '"1password" not in ansible_facts.packages'
+
+- name: Add 1password debsig-verify policy
+  shell:
+    cmd: curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol; curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+  when: '"1password" not in ansible_facts.packages'
+
+
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: yes
+
+- name: Install packages
+  package:
+    name:
+      - flatpak
+    state: present
+
+- name: Add flathub to flatpak
+  community.general.flatpak_remote:
+    name: flathub
+    state: present
+    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+
+- name: get i3-gapps
+  apt:
+    deb: https://github.com/barnumbirr/i3-gaps-debian/releases/download/v4.21.1-1/i3-gaps_4.21.1-1_amd64_bullseye.deb
+
+- name: add Hashicorp repo key
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    state: present
+
+- name: Add Hashicorp Debian repo
+  apt_repository:
+    repo: 'deb https://apt.releases.hashicorp.com/ bullseye main'
+    codename: bullseye
+
+- name: add repo key
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 96B9CD7C22E2C8C5
+
+- name: Add polychromatic repository from PPA and install its signing key on Debian target
+  apt_repository:
+    repo: 'deb http://ppa.launchpad.net/polychromatic/stable/ubuntu focal main'
+    codename: focal
+
+- name: add repo key
+  shell:
+    cmd: curl -fsSL https://download.opensuse.org/repositories/hardware:razer/Debian_11/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/hardware_razer.gpg > /dev/null
+
+- name: Add OpenRazer repository from PPA and install its signing key on Debian target
+  apt_repository:
+    repo: 'deb http://download.opensuse.org/repositories/hardware:/razer/Debian_11/ /'
+    codename: focal
+
+######################
+##### Package install ####
+
+- name: Install packages
+  package:
+    name:
+      - zsh
+      - neovim
+      - git
+      - wireguard
+      - build-essential
+      - 1password
+      - brave-browser
+      - arandr
+      - nfs-common
+      - python3-pip
+      - libpam-u2f
+      - remmina
+      - linux-headers-amd64
+      - flameshot
+      - i3status
+      - i3lock
+      - dmenu
+      - diodon
+      - blueman
+      - conky
+      - nitrogen
+      - picom
+      - xfce4-power-manager
+      - dkms
+      - thunar
+      - podman
+      - buildah
+      - polychromatic
+      - terraform
+      - vagrant
+      - terminator
+      - openrazer-meta
+      - autorandr
+      # - resolvconf
+    state: present
+
+######################
+## Discord Install ###
+
+- name: Install Discord
+  community.general.flatpak:
+    name:  com.discordapp.Discord
+    state: present
+
+- name: Create symlink to be able to just run discord from dmenu easily
+  file:
+    src: /var/lib/flatpak/exports/bin/com.discordapp.Discord
+    dest: /usr/bin/discord
+    state: link
+
+- name: Install obsidian
+  apt:
+    deb: "https://github.com/obsidianmd/obsidian-releases/releases/download/v1.3.5/obsidian_1.3.5_amd64.deb"
+  failed_when: false
